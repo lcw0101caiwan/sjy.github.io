@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeoVision | 地理信息可视化平台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        secondary: '#36B37E',
+                        accent: '#FF5630',
+                        neutral: '#F4F5F7',
+                        dark: '#253858'
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .text-shadow {
+                text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            .text-shadow-lg {
+                text-shadow: 0 4px 8px rgba(0,0,0,0.25);
+            }
+            .bg-blur {
+                backdrop-filter: blur(8px);
+            }
+            .scrollbar-hide::-webkit-scrollbar {
+                display: none;
+            }
+            .animate-float {
+                animation: float 6s ease-in-out infinite;
+            }
+            .card-hover {
+                transition: all 0.3s ease;
+            }
+            .card-hover:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            }
+            @keyframes float {
+                0% { transform: translateY(0px); }
+                50% { transform: translateY(-15px); }
+                100% { transform: translateY(0px); }
+            }
+        }
+    </style>
+</head>
+<body class="font-inter text-dark bg-white">
+    <!-- 导航栏 -->
+    <header id="navbar" class="fixed w-full z-50 transition-all duration-300">
+        <nav class="bg-white/90 bg-blur shadow-sm py-4 px-6 md:px-12 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fa fa-globe text-primary text-2xl"></i>
+                <span class="text-xl font-bold text-primary">GeoVision</span>
+            </div>
+            
+            <!-- 桌面导航 -->
+            <div class="hidden md:flex items-center space-x-8">
+                <a href="#dashboard" class="font-medium hover:text-primary transition-colors">仪表盘</a>
+                <a href="#map" class="font-medium hover:text-primary transition-colors">地图</a>
+                <a href="#charts" class="font-medium hover:text-primary transition-colors">数据图表</a>
+                <a href="#analysis" class="font-medium hover:text-primary transition-colors">区域分析</a>
+                <a href="#skills" class="font-medium hover:text-primary transition-colors">技能</a>
+            </div>
+            
+            <!-- 移动端菜单按钮 -->
+            <button id="menu-toggle" class="md:hidden text-dark hover:text-primary transition-colors">
+                <i class="fa fa-bars text-xl"></i>
+            </button>
+        </nav>
+        
+        <!-- 移动端导航菜单 -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white shadow-lg absolute w-full">
+            <div class="flex flex-col p-4 space-y-4">
+                <a href="#dashboard" class="font-medium hover:text-primary transition-colors py-2">仪表盘</a>
+                <a href="#map" class="font-medium hover:text-primary transition-colors py-2">地图</a>
+                <a href="#charts" class="font-medium hover:text-primary transition-colors py-2">数据图表</a>
+                <a href="#analysis" class="font-medium hover:text-primary transition-colors py-2">区域分析</a>
+                <a href="#skills" class="font-medium hover:text-primary transition-colors py-2">技能</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- 英雄区域 -->
+    <section id="dashboard" class="pt-28 pb-20 md:pt-40 md:pb-32 px-6 md:px-12 bg-gradient-to-br from-primary/5 to-secondary/5">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h1 class="text-[clamp(2.5rem,5vw,4rem)] font-bold leading-tight text-dark mb-4">
+                    地理信息<span class="text-primary">可视化</span>平台
+                </h1>
+                <p class="text-lg text-gray-600 max-w-3xl mx-auto">
+                    通过交互式地图和数据图表探索世界地理数据，了解全球人口分布、地形特征和环境变化。
+                </p>
+            </div>
+            
+            <!-- 数据卡片 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                <div class="bg-white rounded-xl shadow-md p-6 card-hover">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-semibold text-gray-500">陆地面积</h3>
+                        <i class="fa fa-map text-primary text-xl"></i>
+                    </div>
+                    <p class="text-3xl font-bold text-dark mb-1">148.9百万 km²</p>
+                    <p class="text-sm text-gray-500">占地球表面积的29.2%</p>
+                </div>
+                
+                <div class="bg-white rounded-xl shadow-md p-6 card-hover">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-semibold text-gray-500">全球人口</h3>
+                        <i class="fa fa-users text-secondary text-xl"></i>
+                    </div>
+                    <p class="text-3xl font-bold text-dark mb-1">79亿</p>
+                    <p class="text-sm text-gray-500">截至2023年估计</p>
+                </div>
+                
+                <div class="bg-white rounded-xl shadow-md p-6 card-hover">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-semibold text-gray-500">国家数量</h3>
+                        <i class="fa fa-flag text-accent text-xl"></i>
+                    </div>
+                    <p class="text-3xl font-bold text-dark mb-1">195</p>
+                    <p class="text-sm text-gray-500">联合国承认的主权国家</p>
+                </div>
+                
+                <div class="bg-white rounded-xl shadow-md p-6 card-hover">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-semibold text-gray-500">最高海拔</h3>
+                        <i class="fa fa-mountain text-primary text-xl"></i>
+                    </div>
+                    <p class="text-3xl font-bold text-dark mb-1">8,848 m</p>
+                    <p class="text-sm text-gray-500">珠穆朗玛峰，尼泊尔/中国</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 地图和图表区域 -->
+    <section id="map" class="py-20 px-6 md:px-12 bg-white">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- 左侧控制面板 -->
+                <div class="lg:col-span-1">
+                    <div class="bg-white rounded-xl shadow-md p-6 sticky top-24">
+                        <h3 class="text-xl font-bold text-dark mb-6">地图选项</h3>
+                        
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">地图类型</label>
+                                <select id="mapType" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary">
+                                    <option value="osm">标准地图</option>
+                                    <option value="satellite">卫星地图</option>
+                                    <option value="terrain">地形地图</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">数据层</label>
+                                <div class="space-y-2">
+                                    <label class="flex items-center">
+                                        <input type="checkbox" id="populationLayer" class="form-checkbox h-5 w-5 text-primary rounded">
+                                        <span class="ml-2 text-gray-700">人口密度</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" id="elevationLayer" class="form-checkbox h-5 w-5 text-primary rounded">
+                                        <span class="ml-2 text-gray-700">地形高度</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" id="climateLayer" class="form-checkbox h-5 w-5 text-primary rounded">
+                                        <span class="ml-2 text-gray-700">气候区域</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" id="protectedAreasLayer" class="form-checkbox h-5 w-5 text-primary rounded">
+                                        <span class="ml-2 text-gray-700">自然保护区</span>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">透明度</label>
+                                <input type="range" id="layerOpacity" min="0" max="100" value="70" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">搜索区域</label>
+                                <div class="relative">
+                                    <input type="text" id="searchInput" placeholder="输入国家或地区名称" class="w-full p-3 border border-gray-300 rounded-lg pl-10 focus:ring-2 focus:ring-primary focus:border-primary">
+                                    <i class="fa fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                                </div>
+                                <button id="searchButton" class="mt-2 w-full py-2 bg-primary hover:bg-primary/90 text-white rounded-lg">
+                                    搜索
+                                </button>
+                            </div>
+                            
+                            <button id="updateMap" class="w-full py-3 bg-primary hover:bg-primary/90 text-white rounded-lg shadow-md hover:shadow-lg transition-all transform hover:-translate-y-1">
+                                更新地图
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 右侧地图和图表 -->
+                <div class="lg:col-span-2">
+                    <!-- 交互式地图 -->
+                    <div class="bg-white rounded-xl shadow-md mb-8 overflow-hidden">
+                        <div class="p-6 border-b border-gray-100">
+                            <h3 class="text-xl font-bold text-dark">交互式世界地图</h3>
+                            <p class="text-gray-500">探索全球地理数据分布</p>
+                        </div>
+                        <div class="relative h-[500px] bg-neutral">
+                            <div id="map" class="w-full h-full"></div>
+                            
+                            <!-- 地图加载指示器 -->
+                            <div id="mapLoader" class="absolute inset-0 flex items-center justify-center bg-white/80 bg-blur z-10">
+                                <div class="flex flex-col items-center">
+                                    <div class="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+                                    <p class="mt-4 font-medium text-primary">加载地图中...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 图表区域 -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-white rounded-xl shadow-md p-6">
+                            <h3 class="text-lg font-bold text-dark mb-4">各大洲面积对比</h3>
+                            <div class="h-[300px]">
+                                <canvas id="areaChart"></canvas>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-xl shadow-md p-6">
+                            <h3 class="text-lg font-bold text-dark mb-4">全球人口分布</h3>
+                            <div class="h-[300px]">
+                                <canvas id="populationChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 详细图层信息 -->
+    <section id="layers" class="py-20 px-6 md:px-12 bg-neutral">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-[clamp(1.8rem,3vw,2.5rem)] font-bold text-dark mb-4">地理信息图层</h2>
+                <p class="text-gray-600 max-w-2xl mx-auto">探索各种地理信息图层，了解地球的多样性和复杂性</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <!-- 地形高度图层 -->
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden card-hover">
+                    <div class="h-48 overflow-hidden">
+                        <img src="https://picsum.photos/id/1039/600/400" alt="地形高度图层" class="w-full h-full object-cover">
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-dark mb-2">地形高度</h3>
+                        <p class="text-gray-600 mb-4">展示全球地形高度分布，从深海海沟到高山峰巅，颜色越深表示海拔越高。</p>
+                        <div class="flex items-center text-sm text-gray-500 mb-4">
+                            <span class="flex items-center mr-4">
+                                <i class="fa fa-info-circle mr-1 text-primary"></i> 高程数据
+                            </span>
+                            <span class="flex items-center">
+                                <i class="fa fa-scale mr-1 text-primary"></i> 米
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 气候类型图层 -->
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden card-hover">
+                    <div class="h-48 overflow-hidden">
+                        <img src="https://picsum.photos/id/1043/600/400" alt="气候类型图层" class="w-full h-full object-cover">
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-dark mb-2">气候类型</h3>
+                        <p class="text-gray-600 mb-4">基于温度、降水和季节变化划分的气候区域，包括热带、温带、寒带等主要类型。</p>
+                        <div class="flex items-center text-sm text-gray-500 mb-4">
+                            <span class="flex items-center mr-4">
+                                <i class="fa fa-info-circle mr-1 text-primary"></i> Köppen分类
+                            </span>
+                            <span class="flex items-center">
+                                <i class="fa fa-thermometer mr-1 text-primary"></i> 温度/降水
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 人口密度图层 -->
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden card-hover">
+                    <div class="h-48 overflow-hidden">
+                        <img src="https://picsum.photos/id/1058/600/400" alt="人口密度图层" class="w-full h-full object-cover">
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-dark mb-2">人口密度</h3>
+                        <p class="text-gray-600 mb-4">展示全球人口分布情况，颜色越红表示人口密度越高，帮助理解人类聚居模式。</p>
+                        <div class="flex items-center text-sm text-gray-500 mb-4">
+                            <span class="flex items-center mr-4">
+                                <i class="fa fa-info-circle mr-1 text-primary"></i> 每平方公里人数
+                            </span>
+                            <span class="flex items-center">
+                                <i class="fa fa-users mr-1 text-primary"></i> 人口数据
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 自然资源图层 -->
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden card-hover">
+                    <div class="h-48 overflow-hidden">
+                        <img src="https://picsum.photos/id/1040/600/400" alt="自然资源图层" class="w-full h-full object-cover">
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-dark mb-2">自然资源</h3>
+                        <p class="text-gray-600 mb-4">显示全球主要自然资源分布，包括石油、天然气、矿产和森林资源等重要资源。</p>
+                        <div class="flex items-center text-sm text-gray-500 mb-4">
+                            <span class="flex items-center mr-4">
+                                <i class="fa fa-info-circle mr-1 text-primary"></i> 资源类型
+                            </span>
+                            <span class="flex items-center">
+                                <i class="fa fa-map-pin mr-1 text-primary"></i> 分布区域
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 技能板块 -->
+    <section id="skills" class="py-20 px-6 md:px-12 bg-white">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-[clamp(1.8rem,3vw,2.5rem)] font-bold text-dark mb-4">专业技能</h2>
+                <p class="text-gray-600 max-w-2xl mx-auto">掌握的技术和工具，用于开发地理信息可视化应用</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <!-- HTML5技能 -->
+                <div class="bg-white rounded-xl shadow-lg p-8 card-hover text-center">
+                    <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="fa fa-html5 text-3xl text-red-500"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-dark mb-2">HTML5</h3>
+                    <p class="text-gray-600">精通HTML5语义化标签和结构，能够构建响应式、无障碍的网页布局。</p>
+                </div>
+                
+                <!-- JavaScript技能 -->
+                <div class="bg-white rounded-xl shadow-lg p-8 card-hover text-center">
+                    <div class="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="fa fa-code text-3xl text-yellow-500"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-dark mb-2">JavaScript</h3>
+                    <p class="text-gray-600">熟悉ES6+语法，能够开发交互式地图和数据可视化应用，掌握异步编程和DOM操作。</p>
+                </div>
+                
+                <!-- Python技能 -->
+                <div class="bg-white rounded-xl shadow-lg p-8 card-hover text-center">
+                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="fa fa-flask text-3xl text-blue-500"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-dark mb-2">Python</h3>
+                    <p class="text-gray-600">熟练使用Python进行地理数据处理和分析，掌握NumPy、Pandas和GeoPandas等库。</p>
+                </div>
+                
+                <!-- ArcGIS技能 -->
+                <div class="bg-white rounded-xl shadow-lg p-8 card-hover text-center">
+                    <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="fa fa-map-o text-3xl text-green-500"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-dark mb-2">ArcGIS</h3>
+                    <p class="text-gray-600">精通ArcGIS平台，能够进行空间分析、地图制作和地理信息系统开发。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 区域分析 -->
+    <section id="analysis" class="py-20 px-6 md:px-12 bg-neutral">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-[clamp(1.8rem,3vw,2.5rem)] font-bold text-dark mb-4">区域地理分析</h2>
+                <p class="text-gray-600 max-w-2xl mx-auto">深入了解不同地理区域的特征和数据对比</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- 分析卡片1 -->
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden card-hover">
+                    <div class="h-48 overflow-hidden">
+                        <img src="https://picsum.photos/id/1018/600/400" alt="亚洲地形分析" class="w-full h-full object-cover">
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-dark mb-2">亚洲地形分析</h3>
+                        <p class="text-gray-600 mb-4">亚洲是世界上最大的洲，拥有多样的地形，包括山脉、高原、平原和沙漠。</p>
+                        <a href="#" class="text-primary hover:text-primary/80 font-medium flex items-center">
+                            查看详情 <i class="fa fa-arrow-right ml-1"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- 分析卡片2 -->
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden card-hover">
+                    <div class="h-48 overflow-hidden">
+                        <img src="https://picsum.photos/id/1036/600/400" alt="非洲气候区域" class="w-full h-full object-cover">
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-dark mb-2">非洲气候区域</h3>
+                        <p class="text-gray-600 mb-4">非洲跨越赤道，气候从北部的沙漠到中部的热带雨林再到南部的草原各不相同。</p>
+                        <a href="#" class="text-primary hover:text-primary/80 font-medium flex items-center">
+                            查看详情 <i class="fa fa-arrow-right ml-1"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- 分析卡片3 -->
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden card-hover">
+                    <div class="h-48 overflow-hidden">
+                        <img src="https://picsum.photos/id/1016/600/400" alt="美洲板块构造" class="w-full h-full object-cover">
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-dark mb-2">美洲板块构造</h3>
+                        <p class="text-gray-600 mb-4">美洲大陆位于多个 tectonic plates 上，造就了多样的地质特征和丰富的自然资源。</p>
+                        <a href="#" class="text-primary hover:text-primary/80 font-medium flex items-center">
+                            查看详情 <i class="fa fa-arrow-right ml-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 页脚 -->
+    <footer class="bg-dark text-white py-12 px-6 md:px-12">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
+                <div>
+                    <div class="flex items-center space-x-2 mb-6">
+                        <i class="fa fa-globe text-primary text-2xl"></i>
+                        <span class="text-xl font-bold">GeoVision</span>
+                    </div>
+                    <p class="text-gray-400 mb-6">探索地理世界，发现自然之美</p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                            <i class="fa fa-facebook"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                            <i class="fa fa-twitter"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                            <i class="fa fa-instagram"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                            <i class="fa fa-linkedin"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-semibold mb-6">快速链接</h4>
+                    <ul class="space-y-3">
+                        <li><a href="#dashboard" class="text-gray-400 hover:text-white transition-colors">仪表盘</a></li>
+                        <li><a href="#map" class="text-gray-400 hover:text-white transition-colors">地图</a></li>
+                        <li><a href="#charts" class="text-gray-400 hover:text-white transition-colors">数据图表</a></li>
+                        <li><a href="#analysis" class="text-gray-400 hover:text-white transition-colors">区域分析</a></li>
+                        <li><a href="#skills" class="text-gray-400 hover:text-white transition-colors">技能</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-semibold mb-6">资源</h4>
+                    <ul class="space-y-3">
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">地理数据</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">API文档</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">帮助中心</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">关于我们</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-semibold mb-6">联系信息</h4>
+                    <ul class="space-y-3">
+                        <li class="flex items-start">
+                            <i class="fa fa-envelope mt-1 mr-3 text-primary"></i>
+                            <span class="text-gray-400">2996696171@qq.com</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-phone mt-1 mr-3 text-primary"></i>
+                            <span class="text-gray-400">13419954281</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-university mt-1 mr-3 text-primary"></i>
+                            <span class="text-gray-400">信阳师范大学</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-id-card mt-1 mr-3 text-primary"></i>
+                            <span class="text-gray-400">学号: 20225084015</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-user mt-1 mr-3 text-primary"></i>
+                            <span class="text-gray-400">姓名: 史竞元</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center">
+                <p class="text-gray-500 text-sm mb-4 md:mb-0">© 2023 GeoVision. 保留所有权利。</p>
+                <div class="flex space-x-6">
+                    <a href="#" class="text-gray-500 hover:text-white text-sm transition-colors">隐私政策</a>
+                    <a href="#" class="text-gray-500 hover:text-white text-sm transition-colors">使用条款</a>
+                    <a href="#" class="text-gray-500 hover:text-white text-sm transition-colors">Cookie政策</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // 导航栏滚动效果
+        window.addEventListener('scroll', function() {
+            const navbar = document.getElementById('navbar');
+            if (window.scrollY > 50) {
+                navbar.classList.add('bg-white', 'shadow-md');
+                navbar.classList.remove('bg-transparent');
+            } else {
+                navbar.classList.remove('bg-white', 'shadow-md');
+                navbar.classList.add('bg-transparent');
+            }
+        });
+        
+        // 移动端菜单切换
+        document.getElementById('menu-toggle').addEventListener('click', function() {
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenu.classList.toggle('hidden');
+        });
+        
+        // 平滑滚动
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                
+                const targetId = this.getAttribute('href');
+                const targetElement = document.querySelector(targetId);
+                
+                if (targetElement) {
+                    window.scrollTo({
+                        top: targetElement.offsetTop - 80,
+                        behavior: 'smooth'
+                    });
+                    
+                    // 关闭移动端菜单
+                    document.getElementById('mobile-menu').classList.add('hidden');
+                }
+            });
+        });
+        
+        // 图表初始化
+        window.addEventListener('DOMContentLoaded', function() {
+            // 面积对比图表
+            const areaCtx = document.getElementById('areaChart').getContext('2d');
+            new Chart(areaCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['亚洲', '非洲', '北美洲', '南美洲', '南极洲', '欧洲', '大洋洲'],
+                    datasets: [{
+                        label: '面积 (百万 km²)',
+                        data: [44.58, 30.37, 24.71, 17.84, 14.00, 10.18, 8.56],
+                        backgroundColor: [
+                            'rgba(22, 93, 255, 0.8)',
+                            'rgba(54, 179, 126, 0.8)',
+                            'rgba(255, 86, 48, 0.8)',
+                            'rgba(141, 110, 99, 0.8)',
+                            'rgba(171, 71, 188, 0.8)',
+                            'rgba(255, 171, 64, 0.8)',
+                            'rgba(255, 235, 59, 0.8)'
+                        ],
+                        borderColor: [
+                            'rgba(22, 93, 255, 1)',
+                            'rgba(54, 179, 126, 1)',
+                            'rgba(255, 86, 48, 1)',
+                            'rgba(141, 110, 99, 1)',
+                            'rgba(171, 71, 188, 1)',
+                            'rgba(255, 171, 64, 1)',
+                            'rgba(255, 235, 59, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+            
+            // 人口分布图表
+            const populationCtx = document.getElementById('populationChart').getContext('2d');
+            new Chart(populationCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['亚洲', '非洲', '欧洲', '北美洲', '南美洲', '大洋洲'],
+                    datasets: [{
+                        label: '人口 (亿)',
+                        data: [46.41, 13.40, 7.48, 5.92, 4.34, 0.43],
+                        backgroundColor: [
+                            'rgba(22, 93, 255, 0.8)',
+                            'rgba(54, 179, 126, 0.8)',
+                            'rgba(171, 71, 188, 0.8)',
+                            'rgba(255, 86, 48, 0.8)',
+                            'rgba(255, 171, 64, 0.8)',
+                            'rgba(255, 235, 59, 0.8)'
+                        ],
+                        borderColor: [
+                            'rgba(22, 93, 255, 1)',
+                            'rgba(54, 179, 126, 1)',
+                            'rgba(171, 71, 188, 1)',
+                            'rgba(255, 86, 48, 1)',
+                            'rgba(255, 171, 64, 1)',
+                            'rgba(255, 235, 59, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                        }
+                    }
+                }
+            });
+            
